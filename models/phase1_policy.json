@@ -1,0 +1,6 @@
+{
+  "threshold": 3.348073751112679e-05,
+  "threshold_quantile": 0.95,
+  "calibration_reference_count": 34,
+  "checkpoint_sha256": "5784b2e68a68fdd179a7c4f8de45022afe9ee866e8421a17234671c61aab397f"
+}

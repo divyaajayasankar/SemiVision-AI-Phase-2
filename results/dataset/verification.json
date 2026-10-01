@@ -1,0 +1,30 @@
+{
+  "csv_rows": 4591,
+  "image_count": 4591,
+  "mask_count": 4591,
+  "unique_dimensions": [
+    [
+      480,
+      480
+    ]
+  ],
+  "image_modes": [
+    "L"
+  ],
+  "empty_masks": 226,
+  "non_empty_masks": 4365,
+  "avg_mask_coverage": 0.02584928865201239,
+  "median_mask_coverage": 0.0169140625,
+  "max_mask_coverage": 0.8470703125,
+  "missing_csv_values": 0,
+  "duplicate_filenames": 0,
+  "label_distribution": {
+    "1": 55,
+    "2": 8,
+    "3": 4008,
+    "4": 289,
+    "5": 4,
+    "6": 227
+  },
+  "csv_sha256": "a0696b04de66900a26034fb938dde8b9773e3ea634765ce2299365d19f0d7195"
+}

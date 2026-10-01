@@ -1,0 +1,5 @@
+method,mean_roc_auc,mean_balanced_accuracy,mean_fpr,mean_fnr,worst_balanced_accuracy,mean_delta_roc_auc
+Phase 1,0.97027,0.680495,0.633152,0.005857,0.500000,-0.026823
+Phase 1 + recalibration,0.97027,0.933084,0.103261,0.030571,0.878211,-0.026823
+Phase 2,0.97027,0.680495,0.633152,0.005857,0.500000,-0.026823
+Phase 2 + recalibration,0.97027,0.933084,0.103261,0.030571,0.878211,-0.026823

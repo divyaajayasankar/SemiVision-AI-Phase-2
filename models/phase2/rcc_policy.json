@@ -1,0 +1,18 @@
+{
+  "topk": 0.001,
+  "lambda": 0.0,
+  "alpha": 0.05,
+  "global_stats": {
+    "median": 2.789929749269504e-05,
+    "mad": 2.7301830414216965e-06
+  },
+  "local_stats": {
+    "median": 0.0005105019663460553,
+    "mad": 4.972855094820261e-05
+  },
+  "localization_threshold": 0.00023953019990585744,
+  "fn_cost": 10.0,
+  "fp_cost": 1.0,
+  "calibration_reference_count": 34,
+  "checkpoint_sha256": "5784b2e68a68fdd179a7c4f8de45022afe9ee866e8421a17234671c61aab397f"
+}

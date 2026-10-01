@@ -1,0 +1,14 @@
+{
+  "provenance": "Previously verified project run supplied by the researcher; not recomputed in this packaged workspace.",
+  "roc_auc": 0.9971,
+  "pr_auc": 0.9998,
+  "f1": 0.9989,
+  "balanced_accuracy": 0.9886,
+  "fpr": 0.0217,
+  "fnr": 0.0011,
+  "cost_per_image": 0.0119,
+  "topk": 0.001,
+  "lambda": 1.0,
+  "alpha": 0.075,
+  "localization": {"dice": 0.5381, "iou": 0.3795, "pixel_auroc": 0.9860, "disk_dice": 0.3751}
+}

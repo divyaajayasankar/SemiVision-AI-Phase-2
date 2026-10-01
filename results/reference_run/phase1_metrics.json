@@ -1,0 +1,13 @@
+{
+  "provenance": "Previously verified project run supplied by the researcher; not recomputed in this packaged workspace.",
+  "roc_auc": 0.9971,
+  "pr_auc": 0.9998,
+  "f1": 0.9989,
+  "balanced_accuracy": 0.9886,
+  "fpr": 0.0217,
+  "fnr": 0.0011,
+  "localization_exploratory": {"dice": 0.4142, "iou": 0.2704, "pixel_auroc": 0.9450},
+  "best_epoch": 141,
+  "best_validation_loss": 0.000021,
+  "model_parameters_reported": 2392417
+}

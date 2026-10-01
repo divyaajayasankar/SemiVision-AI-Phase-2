@@ -1,0 +1,118 @@
+# Risk-Calibrated and Cost-Aware Anomaly Detection Visual Screening for Semiconductor Manufacturing Under Distribution Drift
+
+**Dashboard:** SemiVision AI - Semiconductor Defect Intelligence Platform
+
+## Overview
+This M.Tech research project evaluates a reference-only 2-D convolutional autoencoder (ConvAE) for semiconductor SEM visual anomaly screening and proposes RCC-ConvAE, a risk-calibrated and cost-aware decision framework built on the frozen ConvAE. The proposed phase combines global reconstruction error, localized top-k evidence, robust score normalization, conformal calibration, asymmetric decision cost, pixel-level localization, and controlled distribution-drift evaluation.
+
+## Dataset
+The project uses **Carinthia-S**, an SEM defect dataset with 4,591 images and paired segmentation masks in the verified release. Ground truth is derived from the masks:
+
+- empty mask -> REFERENCE/NORMAL candidate
+- non-empty mask -> ANOMALY/DEFECT
+
+See `DATASET_SETUP.md`. Raw dataset bytes are not fabricated in this ZIP.
+
+## Base paper
+M. Gorman, X. Ding, L. Maguire, and D. Coyle, "Anomaly Detection in Batch Manufacturing Processes Using Localized Reconstruction Errors From 1-D Convolutional AutoEncoders," *IEEE Transactions on Semiconductor Manufacturing*, vol. 36, no. 1, pp. 147-150, 2023, DOI: 10.1109/TSM.2022.3216032.
+
+The paper reports **AUC = 1.00** on its reported LAM 9600 experiment. This must not be described as "100% accuracy," and the cross-dataset value is not treated as directly comparable with Carinthia-S.
+
+## Phase 1 - 2-D ConvAE baseline
+Reference SEM images -> preprocessing -> 2-D ConvAE -> reconstruction -> global MSE reconstruction score -> reference-calibration quantile threshold -> REFERENCE/ANOMALY.
+
+For image x and reconstruction x_hat:
+
+`S_global = (1/N) * sum_i (x_i - x_hat_i)^2`
+
+Only reference images are used for Phase-1 training.
+
+## Phase 2 - RCC-ConvAE
+Frozen Phase-1 ConvAE -> error map -> global score + localized top-k score -> robust normalization -> fused score -> reference-only conformal p-value -> cost-aware alpha -> REFERENCE/ANOMALY -> pixel-level localization -> distribution-drift tests.
+
+Local score: mean of the largest k fraction of reconstruction-error pixels.
+
+Fused score:
+
+`S_fused = Z_global + lambda * Z_local`
+
+Conformal p-value:
+
+`p = (1 + #{calibration scores >= new score}) / (n + 1)`
+
+Default asymmetric cost:
+
+`Cost = 10 * FN + 1 * FP`
+
+## Experimental integrity
+The final TEST split is excluded from:
+- training and early stopping
+- checkpoint/model selection
+- top-k selection
+- lambda selection
+- normalization fitting
+- conformal calibration
+- alpha/cost-policy selection
+- localization threshold selection
+- all other hyperparameter or operating-point selection
+
+## Metrics
+Image-level: ROC-AUC, PR-AUC, accuracy, balanced accuracy, precision, recall, specificity, F1, FPR, FNR, TN/FP/FN/TP, cost/image.
+
+Localization: Dice, IoU, sampled pixel AUROC, pixel average precision.
+
+Drift: clean, brightness +/-0.10, contrast 0.70, gamma 1.50, noise 0.02/0.05, Gaussian blur 1.0/2.0; frozen vs reference-only recalibrated policy.
+
+## Historical verified reference run
+The ZIP includes `results/reference_run/`, which preserves metrics from the previously verified repository run. These numbers are **not presented as newly recomputed** by this package.
+
+Phase 1 reference results: ROC-AUC 0.9971, PR-AUC 0.9998, F1 0.9989, balanced accuracy 0.9886, FPR 0.0217, FNR 0.0011. Exploratory localization: Dice 0.4142, IoU 0.2704, pixel AUROC 0.9450.
+
+Phase 2 reference results: ROC-AUC 0.9971, PR-AUC 0.9998, F1 0.9989, balanced accuracy 0.9886, FPR 0.0217, FNR 0.0011, cost/image 0.0119. Localization: Dice 0.5381, IoU 0.3795, pixel AUROC 0.9860. Selected top-k 0.001, lambda 1.0, alpha 0.075.
+
+## Project structure
+- `src/` core algorithms
+- `experiments/` reproducible research stages
+- `models/` trained checkpoint and frozen policies after execution
+- `results/` recomputed outputs plus separate `reference_run/`
+- `reports/` research tables and manifests
+- `app/` Streamlit dashboard
+- `paper/` IEEE-style paper
+- `tests/` synthetic and integrity tests
+- `scripts/` environment and packaging helpers
+
+## Quick start (Windows PowerShell)
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+
+python experiments\01_verify_dataset.py
+python run_all.py
+pytest -q
+streamlit run app\streamlit_app.py
+python scripts\package_project.py
+```
+
+## Dashboard
+The dashboard provides:
+1. project overview
+2. single SEM screening
+3. batch screening with CSV export
+4. Phase-1/Phase-2 research metrics
+5. distribution-drift analysis
+6. ablation study
+7. model/policy information
+8. methodology and integrity notes
+
+When fresh results are unavailable, research pages display the **historical verified reference run** with a visible provenance label. Live screening requires a trained `models/convae_best.pt` and frozen policies generated by the experiment pipeline.
+
+## Research interpretation
+The reference run does not show a meaningful Phase-2 image-level AUC gain over the already strong Phase-1 baseline. The principal empirical improvement is localization: Dice increased from 0.4142 to 0.5381, IoU from 0.2704 to 0.3795, and pixel AUROC from 0.9450 to 0.9860. Drift experiments also show the operational importance of recalibration under brightness, gamma, and noise changes.
+
+## Known limitations
+- The raw Carinthia-S dataset is not included unless the user supplies it for packaging.
+- A trained checkpoint cannot be truthfully fabricated; the supplied code trains/reuses one locally.
+- Historical result files are separated from newly recomputed result directories.
+- Cross-dataset comparison with LAM 9600 is contextual, not a controlled performance comparison.

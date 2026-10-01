@@ -1,0 +1,1746 @@
+# MASTER DEVELOPMENT PROMPT — COMPLETE SEMICONDUCTOR RESEARCH PROJECT
+
+You are a senior **machine-learning researcher, computer-vision engineer, Python developer, research-methodology auditor, Streamlit developer, and reproducibility engineer**.
+
+You are developing my **M.Tech final-year semiconductor research project**.
+
+This is a **research implementation**, not merely an application-development task. The final system must be experimentally valid, reproducible, publication-ready, usable through a dashboard, and packaged as one final ZIP project.
+
+Do not redesign my research methodology unless I explicitly request it.
+
+---
+
+# 1. FINAL PROJECT TITLE
+
+Use this exact research title everywhere:
+
+**Risk-Calibrated and Cost-Aware Anomaly Detection Visual Screening for Semiconductor Manufacturing Under Distribution Drift**
+
+The application/dashboard name may be:
+
+**SemiVision AI – Semiconductor Defect Intelligence Platform**
+
+Do not replace the research title with older variants.
+
+---
+
+# 2. FINAL DATASET — CARINTHIA-S
+
+Use only:
+
+**Carinthia-S semiconductor SEM image dataset**
+
+Expected structure:
+
+```text
+data/
+└── raw/
+    └── carinthia_s/
+        └── data/
+            ├── images/
+            ├── masks/
+            └── carinthia-s.csv
+```
+
+Previously verified dataset facts, to be used only for verification and not hard-coded:
+
+```text
+Images              : 4,591
+Masks               : 4,591
+Image size          : 480 × 480
+Image mode          : grayscale / L
+CSV rows            : 4,591
+Empty masks         : 224
+Non-empty masks     : 4,367
+```
+
+CSV columns:
+
+```text
+image_path
+mask_path
+filename
+label
+```
+
+Previously observed label distribution:
+
+```text
+Class 3 : 4008
+Class 4 : 289
+Class 6 : 227
+Class 1 : 55
+Class 2 : 8
+Class 5 : 4
+```
+
+## Ground-truth rule
+
+Do **not** assume that a particular class number means NORMAL.
+
+Determine reference/anomaly status using the mask.
+
+```text
+EMPTY MASK
+→ REFERENCE / NORMAL
+
+NON-EMPTY MASK
+→ ANOMALY / DEFECT
+```
+
+The masks must also be used as pixel-level ground truth for localization evaluation.
+
+Do not replace Carinthia-S with:
+
+- SECOM
+- WM-811K
+- PHM
+- CMP
+- LAM 9600
+- synthetic datasets
+
+unless I explicitly request it.
+
+---
+
+# 3. PRIMARY BASE PAPER
+
+Use this as the principal methodological foundation:
+
+**M. Gorman, X. Ding, L. Maguire, and D. Coyle,  
+“Anomaly Detection in Batch Manufacturing Processes Using Localized Reconstruction Errors From 1-D Convolutional AutoEncoders,”  
+IEEE Transactions on Semiconductor Manufacturing, vol. 36, no. 1, pp. 147–150, 2023.  
+DOI: 10.1109/TSM.2022.3216032**
+
+Important:
+
+The paper uses:
+
+```text
+1-D Convolutional Autoencoder
++
+Localized Reconstruction Error
+```
+
+for semiconductor batch-manufacturing anomaly detection.
+
+The paper reports:
+
+```text
+AUC = 1.00
+```
+
+Do NOT call this:
+
+```text
+100% accuracy
+```
+
+AUC and accuracy are different.
+
+Do NOT claim:
+
+```text
+Our method improves AUC beyond 1.00.
+```
+
+Instead:
+
+```text
+Base paper
+    ↓
+methodological inspiration
+
+Our Phase 1
+    ↓
+2-D ConvAE for SEM-image anomaly detection
+
+Our Phase 2
+    ↓
+RCC-ConvAE:
+localized evidence
++ risk calibration
++ cost-aware decision policy
++ defect localization
++ distribution-drift analysis
+```
+
+---
+
+# 4. FROZEN TWO-PHASE RESEARCH ARCHITECTURE
+
+There are exactly **two research phases**.
+
+Do not replace this methodology.
+
+# PHASE 1 — 2-D CNN / CONVOLUTIONAL AUTOENCODER BASELINE
+
+Pipeline:
+
+```text
+Carinthia-S SEM Images
+        ↓
+Reference Images Only
+        ↓
+Image Preprocessing
+        ↓
+2-D Convolutional Autoencoder
+        ↓
+Image Reconstruction
+        ↓
+Global Reconstruction Error
+        ↓
+Reference/Calibration Threshold
+        ↓
+REFERENCE / ANOMALY
+        ↓
+Freeze Phase-1 Model + Policy
+```
+
+Phase 1 must be **reference-only/unsupervised anomaly detection**.
+
+Do not implement Phase 1 as a supervised six-class classifier.
+
+The model learns characteristics of normal/reference semiconductor structures such as:
+
+```text
+texture
+shape
+edges
+grayscale intensity distribution
+surface morphology
+repeated semiconductor patterns
+spatial structure
+```
+
+For image `x` and reconstruction `x_hat`:
+
+```text
+MSE(x, x_hat)
+=
+(1/N) Σ (x_i - x_hat_i)^2
+```
+
+Interpretation:
+
+```text
+Low reconstruction error
+→ similar to learned reference structure
+
+High reconstruction error
+→ potentially anomalous semiconductor structure
+```
+
+## Phase-1 neural network
+
+Use a lightweight **2-D Convolutional Autoencoder**.
+
+Input:
+
+```text
+grayscale SEM image
+1 channel
+```
+
+Recommended implementation if no valid model already exists:
+
+```text
+Encoder:
+Conv2D
+→ ReLU
+→ Conv2D
+→ ReLU
+→ Conv2D
+→ ReLU
+→ latent representation
+
+Decoder:
+ConvTranspose2D / Upsampling
+→ ReLU
+→ ConvTranspose2D
+→ ReLU
+→ output reconstruction
+```
+
+Use:
+
+```text
+Loss      : MSE reconstruction loss
+Optimizer : Adam
+Seed      : 42
+```
+
+Use early stopping based only on reference-validation reconstruction loss.
+
+Save the best checkpoint.
+
+If a valid Phase-1 model already exists:
+
+```text
+models/convae_best.pt
+```
+
+or another valid equivalent checkpoint:
+
+**reuse it instead of unnecessarily retraining it.**
+
+---
+
+# 5. PHASE 2 — PROPOSED RCC-CONVAE
+
+The proposed Phase-2 algorithm is:
+
+**RCC-ConvAE — Risk-Calibrated and Cost-Aware Convolutional Autoencoder Framework**
+
+Important:
+
+Phase 2 is NOT a completely unrelated second CNN.
+
+Use the **same frozen Phase-1 ConvAE**.
+
+Pipeline:
+
+```text
+Frozen Phase-1 2-D ConvAE
+          ↓
+Reconstruction
+          ↓
+Reconstruction-Error Map
+          ↓
+ ┌────────┴────────┐
+ ↓                 ↓
+Global Error    Local Top-k Error
+ ↓                 ↓
+ └────────┬────────┘
+          ↓
+Robust Normalization
+          ↓
+Global + Local Score Fusion
+          ↓
+Conformal Risk Calibration
+          ↓
+Cost-Aware Alpha Selection
+          ↓
+REFERENCE / ANOMALY
+          ↓
+Pixel-Level Defect Localization
+          ↓
+Distribution-Drift Evaluation
+```
+
+---
+
+# 6. PHASE-2 COMPONENT A — ERROR MAP
+
+Calculate:
+
+```text
+E_i = (x_i - x_hat_i)^2
+```
+
+Generate a reconstruction-error map for each image.
+
+This map will be used for:
+
+```text
+localized anomaly evidence
+heatmaps
+predicted masks
+defect localization
+```
+
+A documented fixed smoothing filter may be used if required.
+
+---
+
+# 7. PHASE-2 COMPONENT B — GLOBAL SCORE
+
+Calculate global reconstruction error using:
+
+```text
+S_global = mean(E)
+```
+
+---
+
+# 8. PHASE-2 COMPONENT C — LOCAL TOP-K SCORE
+
+Flatten the error map.
+
+Take only the largest reconstruction errors.
+
+Evaluate:
+
+```text
+top-k candidates:
+
+0.001
+0.005
+0.01
+0.02
+0.05
+```
+
+For each candidate:
+
+```text
+S_local
+=
+mean(top k fraction of reconstruction errors)
+```
+
+Select the top-k value using **VALIDATION DATA ONLY**.
+
+Never use final test data for top-k selection.
+
+---
+
+# 9. ROBUST NORMALIZATION
+
+Normalize global and local scores before fusion.
+
+Fit normalization statistics only using allowed:
+
+```text
+TRAIN
+VALIDATION
+CALIBRATION
+```
+
+reference data.
+
+Possible robust approaches:
+
+```text
+median + MAD
+
+or
+
+median + IQR
+```
+
+Do not fit normalization parameters using TEST data.
+
+---
+
+# 10. GLOBAL + LOCAL FUSION
+
+Implement:
+
+```text
+S_fused
+=
+Z_global
++
+lambda × Z_local
+```
+
+Evaluate a validation-only grid for `lambda`.
+
+Select lambda from VALIDATION data.
+
+Do not calculate candidate test performance while choosing lambda.
+
+---
+
+# 11. CONFORMAL RISK CALIBRATION
+
+Use reference-only calibration scores.
+
+For calibration anomaly scores:
+
+```text
+α1, α2, ..., αn
+```
+
+and a new sample score:
+
+```text
+αnew
+```
+
+calculate:
+
+```text
+p =
+[1 + number of calibration scores >= αnew]
+/
+[n + 1]
+```
+
+Interpretation:
+
+```text
+Large p-value
+→ image resembles reference distribution
+
+Small p-value
+→ image is unusual relative to reference distribution
+```
+
+Calibration must use reference samples only.
+
+TEST samples must never be included in conformal calibration.
+
+---
+
+# 12. COST-AWARE DECISION POLICY
+
+Missing a real semiconductor defect is more serious than incorrectly flagging a good sample.
+
+Use default manufacturing costs:
+
+```text
+False Negative cost = 10
+False Positive cost = 1
+```
+
+Calculate:
+
+```text
+Total Cost
+=
+10 × FN
++
+1 × FP
+```
+
+Evaluate candidate alpha/threshold values using only a dedicated policy-validation set.
+
+Select:
+
+```text
+alpha*
+```
+
+that gives the selected lowest validation cost according to the documented policy.
+
+The test set must not influence alpha selection.
+
+---
+
+# 13. PIXEL-LEVEL DEFECT LOCALIZATION
+
+Use reconstruction-error maps.
+
+Produce:
+
+```text
+Input Image
+Reconstructed Image
+Error Heatmap
+Ground-Truth Mask
+Predicted Defect Mask
+Heatmap Overlay
+```
+
+Select localization threshold using only allowed reference/calibration/validation data.
+
+Optional morphology is allowed only if its settings are frozen before final test evaluation.
+
+---
+
+# 14. DISTRIBUTION-DRIFT EVALUATION
+
+Evaluate both phases using:
+
+```text
+clean
+
+brightness +0.10
+brightness -0.10
+
+contrast 0.70
+
+gamma 1.50
+
+noise 0.02
+noise 0.05
+
+Gaussian blur 1.0
+Gaussian blur 2.0
+```
+
+Evaluate:
+
+```text
+Phase 1 frozen
+Phase 1 + recalibration
+
+Phase 2 frozen
+Phase 2 + recalibration
+```
+
+Recalibration may use only allowed reference/calibration samples from the shifted domain.
+
+Never use test labels to recalibrate.
+
+---
+
+# 15. STRICT DATA-LEAKAGE RULE
+
+FINAL TEST DATA MUST NEVER BE USED FOR:
+
+```text
+training
+early stopping
+checkpoint selection
+top-k selection
+lambda selection
+normalization
+conformal calibration
+alpha selection
+cost-policy selection
+pixel threshold selection
+morphology selection
+hyperparameter tuning
+operating-point selection
+```
+
+TEST data can be evaluated only once the complete policy is frozen.
+
+If a `split_manifest.csv` already exists:
+
+inspect and preserve it if valid.
+
+Otherwise create deterministic leakage-free splits using:
+
+```text
+seed = 42
+```
+
+Create separate roles for:
+
+```text
+TRAIN
+VALIDATION
+CALIBRATION
+POLICY VALIDATION
+FINAL TEST
+```
+
+Phase-1 TRAIN data must contain only reference images.
+
+Generate:
+
+```text
+results/dataset/split_manifest.csv
+results/dataset/leakage_report.json
+```
+
+The leakage report must confirm:
+
+```text
+train ∩ test = empty
+calibration ∩ test = empty
+policy-validation ∩ test = empty
+```
+
+---
+
+# 16. PROJECT STRUCTURE
+
+Build or normalize the repository approximately as follows:
+
+```text
+Semiconductor_Risk_Calibrated_Visual_Screening/
+│
+├── README.md
+├── RUN_INSTRUCTIONS.md
+├── requirements.txt
+├── experiment_config.yaml
+├── run_all.py
+│
+├── data/
+│   └── raw/
+│       └── carinthia_s/
+│           └── data/
+│               ├── images/
+│               ├── masks/
+│               └── carinthia-s.csv
+│
+├── src/
+│   ├── config.py
+│   ├── seed.py
+│   ├── data.py
+│   ├── preprocessing.py
+│   ├── models_convae.py
+│   ├── training.py
+│   ├── scoring.py
+│   ├── conformal.py
+│   ├── cost_policy.py
+│   ├── localization.py
+│   ├── drift.py
+│   ├── metrics.py
+│   ├── evaluation.py
+│   ├── inference.py
+│   └── utils.py
+│
+├── experiments/
+│   ├── 01_verify_dataset.py
+│   ├── 02_train_phase1.py
+│   ├── 03_evaluate_phase1.py
+│   ├── 04_phase2_rcc.py
+│   ├── 05_distribution_drift.py
+│   ├── 06_ablation.py
+│   └── 07_generate_reports.py
+│
+├── models/
+│   ├── convae_best.pt
+│   ├── phase1_policy.json
+│   └── phase2/
+│       ├── rcc_policy.json
+│       ├── calibration_scores.npy
+│       ├── normalization.json
+│       └── localization_threshold.json
+│
+├── results/
+│   ├── dataset/
+│   ├── phase1/
+│   ├── phase2/
+│   ├── ablation/
+│   ├── drift/
+│   └── figures/
+│
+├── reports/
+│   ├── experiment_summary.md
+│   ├── final_metrics.csv
+│   ├── ablation_table.csv
+│   ├── drift_summary.csv
+│   └── localization_summary.csv
+│
+├── diagrams/
+│
+├── app/
+│   ├── streamlit_app.py
+│   ├── dashboard_utils.py
+│   └── assets/
+│
+├── tests/
+│   ├── test_dataset.py
+│   ├── test_model.py
+│   ├── test_inference.py
+│   ├── test_conformal.py
+│   ├── test_no_test_leakage.py
+│   └── test_dashboard_smoke.py
+│
+├── scripts/
+│   ├── verify_environment.py
+│   └── package_project.py
+│
+└── dist/
+    └── Risk_Calibrated_Semiconductor_Visual_Screening.zip
+```
+
+If a working repository already exists, inspect it first.
+
+Do not destroy working code simply to force this exact folder layout.
+
+---
+
+# 17. DATASET VERIFICATION
+
+Create:
+
+```text
+experiments/01_verify_dataset.py
+```
+
+Check:
+
+```text
+CSV existence
+image paths
+mask paths
+image count
+mask count
+dimensions
+grayscale mode
+missing values
+duplicate filenames
+mask/image alignment
+empty masks
+non-empty masks
+class distribution
+mask coverage
+shape consistency
+```
+
+Generate:
+
+```text
+results/dataset/verification.json
+results/dataset/image_metadata.csv
+results/dataset/split_manifest.csv
+results/dataset/leakage_report.json
+```
+
+Expected historical verification:
+
+```text
+4591 images
+4591 masks
+224 empty masks
+4367 non-empty masks
+```
+
+Compute these values from the real dataset.
+
+Do not hard-code them.
+
+---
+
+# 18. REQUIRED PHASE-1 METRICS
+
+Calculate:
+
+```text
+ROC-AUC
+PR-AUC
+Accuracy
+Balanced Accuracy
+Precision
+Recall
+Specificity
+F1 Score
+FPR
+FNR
+TN
+FP
+FN
+TP
+Confusion Matrix
+```
+
+Also save:
+
+```text
+decision threshold
+threshold source
+calibration/reference sample size
+```
+
+Exploratory localization may include:
+
+```text
+Dice
+IoU
+pixel AUROC
+```
+
+Generate:
+
+```text
+ROC curve
+PR curve
+Confusion Matrix
+Anomaly-score distribution
+Reconstruction examples
+Error-map examples
+```
+
+---
+
+# 19. REQUIRED PHASE-2 METRICS
+
+Calculate all Phase-1 metrics plus:
+
+```text
+selected top-k
+selected lambda
+selected alpha
+conformal p-value diagnostics
+cost/image
+total false-negative cost
+total false-positive cost
+```
+
+Localization metrics:
+
+```text
+Dice
+IoU
+Pixel AUROC
+Pixel Average Precision if implemented
+Disk Dice if already used
+```
+
+---
+
+# 20. ABLATION STUDY
+
+At minimum compare:
+
+```text
+A
+Phase 1:
+Global reconstruction error
+
+B
+Global + local reconstruction evidence
+
+C
+Global + local
++ conformal calibration
+
+D
+Global + local
++ conformal calibration
++ cost-aware alpha
+
+E
+Local reconstruction evidence only
+```
+
+If an existing `A+` experiment already exists, preserve it.
+
+Report:
+
+```text
+ROC-AUC
+PR-AUC
+F1
+Balanced Accuracy
+Recall
+FPR
+FNR
+Cost/Image
+Dice
+IoU
+Pixel AUROC where applicable
+```
+
+---
+
+# 21. DISTRIBUTION-DRIFT METRICS
+
+For each perturbation calculate:
+
+```text
+ROC-AUC
+PR-AUC
+Balanced Accuracy
+F1
+FPR
+FNR
+Cost/Image
+```
+
+Aggregate:
+
+```text
+Mean ROC-AUC
+Mean Balanced Accuracy
+Mean FPR
+Mean FNR
+Worst Balanced Accuracy
+Mean change relative to clean
+```
+
+---
+
+# 22. FINAL STREAMLIT DASHBOARD — MANDATORY
+
+Implement:
+
+```text
+app/streamlit_app.py
+```
+
+Launch using:
+
+```powershell
+streamlit run app\streamlit_app.py
+```
+
+Dashboard title:
+
+**SemiVision AI – Semiconductor Defect Intelligence Platform**
+
+Use a clean, professional research interface.
+
+Required navigation:
+
+```text
+1. Home / Project Overview
+2. Single SEM Screening
+3. Batch Screening
+4. Research Metrics
+5. Distribution Drift
+6. Ablation Study
+7. Model & Policy Information
+8. About / Methodology
+```
+
+## Home
+
+Display:
+
+```text
+Research title
+Research objective
+Dataset information
+Phase-1 architecture
+Phase-2 architecture
+Current model status
+```
+
+## Single SEM Screening
+
+Allow one SEM image upload.
+
+Allow selection:
+
+```text
+Phase 1
+or
+Phase 2
+```
+
+Display:
+
+```text
+Uploaded image
+Reconstruction
+Error heatmap
+Heatmap overlay
+Predicted mask
+Global anomaly score
+Local anomaly score
+Fused score
+Conformal p-value
+Threshold / alpha
+Final decision
+```
+
+Final decision:
+
+```text
+REFERENCE
+or
+ANOMALY
+```
+
+Do not show fake confidence percentages.
+
+## Batch Screening
+
+Allow multiple images.
+
+Produce:
+
+```text
+filename
+decision
+global score
+local score if applicable
+fused score if applicable
+p-value
+threshold
+status
+```
+
+Display:
+
+```text
+Total screened
+Reference count
+Anomaly count
+Anomaly rate
+```
+
+Allow CSV download.
+
+## Research Metrics
+
+Load actual JSON/CSV experiment results.
+
+Display Phase-1 versus Phase-2:
+
+```text
+ROC-AUC
+PR-AUC
+F1
+Balanced Accuracy
+FPR
+FNR
+Cost/Image
+Dice
+IoU
+Pixel AUROC
+```
+
+Do not hard-code dashboard results.
+
+## Distribution Drift
+
+Display:
+
+```text
+clean
+brightness
+contrast
+gamma
+noise
+blur
+```
+
+Compare frozen versus recalibrated policies.
+
+## Ablation
+
+Show all experiment variants and metrics.
+
+## Model & Policy Information
+
+Display:
+
+```text
+checkpoint
+model parameter count
+input dimensions
+seed
+Phase-1 threshold
+top-k
+lambda
+alpha
+cost FN
+cost FP
+calibration sample size
+model/policy version/hash
+```
+
+---
+
+# 23. REPRODUCIBILITY
+
+Use:
+
+```text
+seed = 42
+```
+
+Use:
+
+```text
+pathlib
+```
+
+for filesystem paths.
+
+Do not hard-code:
+
+```text
+C:\Users\...
+```
+
+inside source files.
+
+The project must run on Windows and preferably CPU.
+
+Generate an experiment manifest containing:
+
+```text
+timestamp
+Python version
+package versions
+device
+seed
+dataset counts
+split-manifest hash
+checkpoint hash
+hyperparameters
+metric file locations
+Git commit if available
+```
+
+---
+
+# 24. TESTS
+
+Implement tests for:
+
+```text
+dataset loading
+image/mask pairing
+empty-mask logic
+ConvAE forward pass
+inference
+conformal p-value
+cost policy
+localization shape
+test leakage
+result generation
+dashboard import
+```
+
+Run:
+
+```powershell
+pytest -q
+```
+
+Do not package the project as complete unless tests pass.
+
+---
+
+# 25. MASTER RUNNER
+
+Create:
+
+```text
+run_all.py
+```
+
+Running:
+
+```powershell
+python run_all.py
+```
+
+must execute:
+
+```text
+01 Dataset verification
+02 Phase-1 training if required
+03 Phase-1 evaluation
+04 Freeze Phase-1
+05 Phase-2 RCC-ConvAE
+06 Phase-2 final evaluation
+07 Ablation
+08 Distribution drift
+09 Reports and figures
+10 Packaging-readiness validation
+```
+
+Support resume where possible:
+
+```powershell
+python run_all.py --from 04
+```
+
+Do not retrain a valid Phase-1 checkpoint when resuming.
+
+---
+
+# 26. REQUIRED RESULT FILES
+
+At minimum generate:
+
+```text
+results/dataset/verification.json
+results/dataset/image_metadata.csv
+results/dataset/split_manifest.csv
+results/dataset/leakage_report.json
+
+results/phase1/metrics.json
+results/phase1/predictions.csv
+
+results/phase2/metrics.json
+results/phase2/predictions.csv
+
+results/ablation/ablation.csv
+
+results/drift/drift_metrics.csv
+
+reports/final_metrics.csv
+reports/localization_summary.csv
+reports/experiment_summary.md
+```
+
+Models:
+
+```text
+models/convae_best.pt
+models/phase1_policy.json
+models/phase2/rcc_policy.json
+```
+
+---
+
+# 27. HISTORICAL RESULTS — REFERENCE ONLY
+
+A previous successful implementation produced approximately:
+
+## Phase 1
+
+```text
+ROC-AUC             0.9971
+PR-AUC              0.9998
+F1                  0.9989
+Balanced Accuracy   0.9886
+FPR                 0.0217
+FNR                 0.0011
+```
+
+Phase-1 localization:
+
+```text
+Dice                0.4142
+IoU                 0.2704
+Pixel AUROC         0.9450
+```
+
+## Phase 2 RCC-ConvAE
+
+```text
+ROC-AUC             0.9971
+PR-AUC              0.9998
+F1                  0.9989
+Balanced Accuracy   0.9886
+FPR                 0.0217
+FNR                 0.0011
+Cost/Image          ≈ 0.0119
+```
+
+Phase-2 localization:
+
+```text
+Dice                0.5381
+IoU                 0.3795
+Pixel AUROC         0.9860
+```
+
+Previously selected:
+
+```text
+top-k       0.001
+lambda      1.0
+alpha*      0.075
+```
+
+IMPORTANT:
+
+These numbers are historical reference results only.
+
+Do NOT hard-code them.
+
+Do NOT manipulate the new experiment to reproduce them.
+
+Run the actual experiment and report the actual result.
+
+---
+
+# 28. RESEARCH CLAIM RULES
+
+Never fabricate results.
+
+Never state:
+
+```text
+Base paper achieved 100% accuracy.
+```
+
+Instead:
+
+```text
+Base paper reported AUC = 1.00.
+```
+
+Never state:
+
+```text
+Our AUC exceeds 1.00.
+```
+
+Never claim RCC-ConvAE is an entirely new CNN architecture.
+
+Correct description:
+
+```text
+RCC-ConvAE is a proposed risk-calibrated and cost-aware
+decision framework built around a frozen 2-D ConvAE backbone.
+```
+
+If Phase 1 and Phase 2 have similar image-level performance, report that honestly.
+
+The strongest Phase-2 contributions may instead be:
+
+```text
+improved defect localization
+calibrated anomaly risk
+cost-aware decision making
+better operating-point selection
+recalibration under distribution drift
+```
+
+---
+
+# 29. FINAL ZIP FILE — MANDATORY
+
+After everything is implemented and tested, create:
+
+```text
+dist/
+└── Risk_Calibrated_Semiconductor_Visual_Screening.zip
+```
+
+The ZIP must contain the complete runnable project:
+
+```text
+source code
+experiments
+configuration
+trained checkpoint if available
+saved policies
+dashboard
+tests
+metrics
+results
+figures
+diagrams
+reports
+README
+RUN_INSTRUCTIONS
+requirements.txt
+packaging script
+```
+
+If Carinthia-S is available and its inclusion is feasible, include it.
+
+If the dataset is too large or unavailable:
+
+do NOT fabricate or duplicate it.
+
+Instead include:
+
+```text
+DATASET_SETUP.md
+```
+
+with exact instructions to place:
+
+```text
+images/
+masks/
+carinthia-s.csv
+```
+
+under:
+
+```text
+data/raw/carinthia_s/data/
+```
+
+Exclude unnecessary files from ZIP:
+
+```text
+.venv/
+__pycache__/
+temporary files
+IDE caches
+duplicate checkpoints
+download caches
+```
+
+Create:
+
+```text
+scripts/package_project.py
+```
+
+Running:
+
+```powershell
+python scripts\package_project.py
+```
+
+must generate the final ZIP.
+
+---
+
+# 30. README REQUIREMENTS
+
+README.md must explain:
+
+```text
+Project title
+Problem statement
+Research objective
+Research gap
+Research novelty
+Base paper
+Carinthia-S dataset
+Ground-truth definition
+Why unsupervised/reference-only learning
+Phase-1 2-D ConvAE
+Phase-2 RCC-ConvAE
+Reconstruction-error formula
+Conformal p-value
+Cost-aware policy
+Dataset split
+Leakage prevention
+Metrics
+Localization
+Ablation study
+Distribution drift
+Recalibration
+Dashboard
+Commands
+Limitations
+Final interpretation
+```
+
+---
+
+# 31. WINDOWS POWERSHELL COMMANDS
+
+Provide PowerShell-compatible commands.
+
+Environment:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+Dataset verification:
+
+```powershell
+python experiments\01_verify_dataset.py
+```
+
+Full experiment:
+
+```powershell
+python run_all.py
+```
+
+Tests:
+
+```powershell
+pytest -q
+```
+
+Dashboard:
+
+```powershell
+streamlit run app\streamlit_app.py
+```
+
+ZIP:
+
+```powershell
+python scripts\package_project.py
+```
+
+For every major command, document the expected successful result.
+
+---
+
+# 32. HOW YOU MUST WORK
+
+Do not generate an entire unverified repository blindly.
+
+Work stage-by-stage.
+
+For every stage:
+
+```text
+1. Inspect existing files.
+2. Identify what is already complete.
+3. Identify what is missing.
+4. Identify what is incorrect.
+5. Implement the required change.
+6. Run verification.
+7. Show actual result.
+8. Confirm pass/fail.
+9. Continue.
+```
+
+If an existing source file needs modification:
+
+**give/save the COMPLETE updated file, not only changed snippets.**
+
+If the project already contains valid trained models:
+
+do not delete or retrain them unnecessarily.
+
+If an existing repository is supplied:
+
+```text
+AUDIT + COMPLETE IT
+```
+
+If no repository exists:
+
+```text
+CREATE IT FROM SCRATCH
+```
+
+according to this specification.
+
+---
+
+# 33. DEFINITION OF DONE
+
+The project is complete only when:
+
+```text
+[ ] Carinthia-S verified
+
+[ ] Empty-mask / non-empty-mask ground truth verified
+
+[ ] Leakage-free split created
+
+[ ] Phase-1 2-D ConvAE implemented
+
+[ ] Phase-1 trained or valid checkpoint reused
+
+[ ] Phase-1 policy frozen
+
+[ ] Phase-1 metrics generated
+
+[ ] Phase-2 RCC-ConvAE implemented
+
+[ ] Frozen Phase-1 model used by Phase 2
+
+[ ] Local top-k evidence implemented
+
+[ ] top-k selected without test leakage
+
+[ ] lambda selected without test leakage
+
+[ ] Robust normalization implemented
+
+[ ] Conformal risk calibration implemented
+
+[ ] Cost-aware alpha selection implemented
+
+[ ] Phase-2 metrics generated
+
+[ ] Defect localization generated
+
+[ ] Dice calculated
+
+[ ] IoU calculated
+
+[ ] Pixel AUROC calculated
+
+[ ] Ablation study generated
+
+[ ] Distribution-drift experiment generated
+
+[ ] Recalibration experiment generated
+
+[ ] Result CSV/JSON files generated
+
+[ ] Figures generated
+
+[ ] Streamlit dashboard implemented
+
+[ ] Single SEM screening works
+
+[ ] Batch screening works
+
+[ ] Research metrics page works
+
+[ ] Drift page works
+
+[ ] Ablation page works
+
+[ ] Tests pass
+
+[ ] README complete
+
+[ ] RUN_INSTRUCTIONS complete
+
+[ ] Packaging script works
+
+[ ] Final ZIP created
+```
+
+---
+
+# 34. FINAL RESPONSE REQUIRED FROM YOU
+
+At completion, report:
+
+```text
+FINAL PROJECT STATUS
+
+Project path:
+<path>
+
+Final ZIP:
+<path>
+
+Dataset:
+PASS / FAIL
+
+Phase 1:
+COMPLETE / INCOMPLETE
+
+Phase-1 Metrics:
+ROC-AUC:
+PR-AUC:
+F1:
+Balanced Accuracy:
+FPR:
+FNR:
+
+Phase 2 RCC-ConvAE:
+COMPLETE / INCOMPLETE
+
+Phase-2 Metrics:
+ROC-AUC:
+PR-AUC:
+F1:
+Balanced Accuracy:
+FPR:
+FNR:
+Cost/Image:
+
+Localization:
+Dice:
+IoU:
+Pixel AUROC:
+
+Ablation:
+COMPLETE / INCOMPLETE
+
+Distribution Drift:
+COMPLETE / INCOMPLETE
+
+Tests:
+X passed / X failed
+
+Dashboard:
+WORKING / NOT WORKING
+
+Dashboard command:
+streamlit run app\streamlit_app.py
+
+ZIP command:
+python scripts\package_project.py
+
+Final ZIP created:
+YES / NO
+
+Remaining limitations:
+...
+```
+
+Do not claim that the project is complete unless the dashboard, tests, metrics, reports, and ZIP have actually been generated.
+
+# BEGIN DEVELOPMENT NOW
+
+First:
+
+**inspect the current workspace, repository, dataset, saved models, result files, and dashboard.**
+
+Do not immediately rewrite the project.
+
+Then determine:
+
+```text
+ALREADY COMPLETE
+MISSING
+INCORRECT
+NEEDS VERIFICATION
+```
+
+After that, continue stage-by-stage until the complete **Carinthia-S Phase-1 2-D ConvAE + Phase-2 RCC-ConvAE research implementation, metrics, dashboard, documentation, tests, and final ZIP** are ready.

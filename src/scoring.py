@@ -1,0 +1,89 @@
+﻿from __future__ import annotations
+from dataclasses import dataclass, asdict
+import numpy as np
+import pandas as pd
+import torch
+from torch.utils.data import DataLoader
+
+
+@dataclass
+class RobustStats:
+    median: float
+    mad: float
+
+    def to_dict(self):
+        return asdict(self)
+
+
+def fit_robust(values) -> RobustStats:
+    x = np.asarray(values, dtype=float)
+    med = float(np.median(x))
+    mad = float(np.median(np.abs(x - med)))
+    if mad < 1e-12:
+        mad = float(np.std(x))
+    if mad < 1e-12:
+        mad = 1.0
+    return RobustStats(med, mad)
+
+
+def robust_z(values, stats: RobustStats) -> np.ndarray:
+    return (np.asarray(values, dtype=float) - stats.median) / (1.4826 * stats.mad + 1e-12)
+
+
+def local_topk_score(error_map: np.ndarray, fraction: float) -> float:
+    flat = error_map.reshape(-1)
+    k = max(1, int(round(len(flat) * float(fraction))))
+    if k >= len(flat):
+        return float(flat.mean())
+    idx = np.argpartition(flat, -k)[-k:]
+    return float(flat[idx].mean())
+
+
+@torch.no_grad()
+def score_dataset(model, dataset, device, topk: float | None = None, batch_size: int = 4) -> pd.DataFrame:
+    model.eval()
+    loader = DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=0)
+    rows = []
+    for batch_idx, batch in enumerate(loader):
+        if batch_idx % 25 == 0:
+            print(f"[SCORE] batch {batch_idx+1}/{len(loader)}", flush=True)
+        x = batch["image"].to(device)
+        recon = model(x)
+        err = (x - recon).pow(2)
+        global_scores = err.flatten(1).mean(1).cpu().numpy()
+        err_np = err[:, 0].cpu().numpy()
+        for j in range(len(global_scores)):
+            row = {
+                "filename": batch["filename"][j],
+                "label": int(batch["label"][j]),
+                "global_score": float(global_scores[j]),
+            }
+            if topk is not None:
+                row["local_score"] = local_topk_score(err_np[j], topk)
+            rows.append(row)
+    return pd.DataFrame(rows)
+
+
+@torch.no_grad()
+def reconstruct_one(model, image_tensor, device):
+    model.eval()
+    x = image_tensor.unsqueeze(0).to(device)
+    r = model(x)
+    err = (x - r).pow(2)
+    return r[0, 0].cpu().numpy(), err[0, 0].cpu().numpy()
+
+@torch.no_grad()
+def score_dataset_multi_topk(model, dataset, device, topks, batch_size: int = 2) -> pd.DataFrame:
+    model.eval(); loader=DataLoader(dataset,batch_size=batch_size,shuffle=False,num_workers=0); rows=[]
+    topks=[float(k) for k in topks]
+    for batch_idx, batch in enumerate(loader):
+        if batch_idx % 25 == 0:
+            print(f"[SCORE] batch {batch_idx+1}/{len(loader)}", flush=True)
+        x=batch["image"].to(device); recon=model(x); err=(x-recon).pow(2)
+        gs=err.flatten(1).mean(1).cpu().numpy(); en=err[:,0].cpu().numpy()
+        for j,g in enumerate(gs):
+            row={"filename":batch["filename"][j],"label":int(batch["label"][j]),"global_score":float(g)}
+            for k in topks: row[f"local_{k:g}"]=local_topk_score(en[j],k)
+            rows.append(row)
+    return pd.DataFrame(rows)
+

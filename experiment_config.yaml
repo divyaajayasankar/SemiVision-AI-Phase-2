@@ -1,0 +1,49 @@
+project:
+  title: "Risk-Calibrated and Cost-Aware Anomaly Detection Visual Screening for Semiconductor Manufacturing Under Distribution Drift"
+  dashboard_name: "SemiVision AI - Semiconductor Defect Intelligence Platform"
+  seed: 42
+
+data:
+  root: "data/raw/carinthia_s/data"
+  csv: "carinthia-s.csv"
+  images_dir: "images"
+  masks_dir: "masks"
+  input_size: 480
+  num_workers: 0
+
+split:
+  reference_train: 0.51
+  reference_validation: 0.15
+  reference_calibration: 0.15
+  reference_policy_validation: 0.10
+  anomaly_validation: 0.20
+  anomaly_policy_validation: 0.20
+
+phase1:
+  batch_size: 8
+  epochs: 150
+  learning_rate: 0.001
+  patience: 25
+  threshold_quantile: 0.95
+  base_channels: 32
+
+phase2:
+  topk_candidates: [0.001, 0.005, 0.01, 0.02, 0.05]
+  lambda_candidates: [0.0, 0.25, 0.5, 1.0, 1.5, 2.0]
+  alpha_candidates: [0.01, 0.025, 0.05, 0.075, 0.10, 0.15, 0.20]
+  fn_cost: 10.0
+  fp_cost: 1.0
+  localization_reference_quantile: 0.995
+  pixel_auc_samples_per_image: 2000
+
+drift:
+  conditions:
+    - clean
+    - brightness_+0.10
+    - brightness_-0.10
+    - contrast_0.70
+    - gamma_1.50
+    - noise_0.02
+    - noise_0.05
+    - blur_1.0
+    - blur_2.0

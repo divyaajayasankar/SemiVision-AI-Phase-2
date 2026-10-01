@@ -1,0 +1,32 @@
+{
+  "roc_auc": 0.9977472317678503,
+  "pr_auc": 0.9999824074431206,
+  "accuracy": 0.9992421371731717,
+  "balanced_accuracy": 0.95,
+  "precision": 0.9992369324685234,
+  "recall": 1.0,
+  "specificity": 0.9,
+  "f1": 0.999618320610687,
+  "fpr": 0.1,
+  "fnr": 0.0,
+  "tn": 18,
+  "fp": 2,
+  "fn": 0,
+  "tp": 2619,
+  "total_cost": 2.0,
+  "cost_per_image": 0.0007578628268283441,
+  "topk": 0.001,
+  "lambda": 0.0,
+  "alpha": 0.05,
+  "calibration_reference_count": 34,
+  "policy_validation_count": 896,
+  "test_count": 2639,
+  "localization": {
+    "dice": 0.2393421870418234,
+    "iou": 0.1431731494169191,
+    "pixel_auroc": 0.9002383970358739,
+    "pixel_average_precision": 0.4777580633093792,
+    "images": 2639
+  },
+  "localization_threshold": 0.00023953019990585744
+}

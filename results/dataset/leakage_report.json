@@ -1,0 +1,25 @@
+{
+  "rows": 4591,
+  "cross_split_duplicate_filenames": 0,
+  "cross_split_duplicates": [],
+  "split_counts": {
+    "test": 2639,
+    "validation": 907,
+    "policy_validation": 896,
+    "train": 115,
+    "calibration": 34
+  },
+  "reference_by_split": {
+    "train": 115,
+    "calibration": 34,
+    "validation": 34,
+    "policy_validation": 23,
+    "test": 20
+  },
+  "anomaly_by_split": {
+    "test": 2619,
+    "policy_validation": 873,
+    "validation": 873
+  },
+  "passed": true
+}

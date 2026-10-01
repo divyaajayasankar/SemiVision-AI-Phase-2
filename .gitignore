@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.streamlit/
+.DS_Store
+*.tmp
+*.log
+data/raw/carinthia_s/data/images/*
+data/raw/carinthia_s/data/masks/*
+data/raw/carinthia_s/data/carinthia-s.csv
+!data/raw/carinthia_s/data/.gitkeep
