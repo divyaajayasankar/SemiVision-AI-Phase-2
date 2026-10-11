@@ -1,12 +1,35 @@
+# Python environment
 .venv/
+venv/
 __pycache__/
 *.pyc
 .pytest_cache/
+
+# Private configuration
+.env
+.env.*
+!.env.example
+
+# Raw semiconductor dataset
+data/raw/carinthia_s/data/images/
+data/raw/carinthia_s/data/masks/
+data/raw/carinthia_s/data/carinthia-s.csv
+
+# Trained model binaries
+*.pt
+*.pth
+*.ckpt
+*.onnx
+*.npy
+*.npz
+
+# Generated ZIP packages
+dist/
+*.zip
+
+# Temporary files
+*.tmp
 .streamlit/
 .DS_Store
 *.tmp
 *.log
-data/raw/carinthia_s/data/images/*
-data/raw/carinthia_s/data/masks/*
-data/raw/carinthia_s/data/carinthia-s.csv
-!data/raw/carinthia_s/data/.gitkeep
