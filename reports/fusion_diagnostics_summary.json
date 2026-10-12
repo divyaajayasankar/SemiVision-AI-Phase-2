@@ -1,0 +1,13 @@
+{
+  "dataset": "saved policy-validation predictions only; final test untouched",
+  "calibration_reference_count": 34,
+  "policy_validation_count": 896,
+  "normal_count": 23,
+  "anomaly_count": 873,
+  "original_lambda": 0.0,
+  "fixed_alpha": 0.05,
+  "minimum_possible_conformal_pvalue": 0.02857142857142857,
+  "global_local_pearson_correlation": 0.7737058012676996,
+  "global_local_spearman_correlation": 0.8317449992926673,
+  "warning": "Exploratory only: alpha was previously chosen on this policy-validation split; do not choose an improved lambda here and claim unbiased gains."
+}

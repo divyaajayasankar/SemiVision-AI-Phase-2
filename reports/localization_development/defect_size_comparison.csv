@@ -1,0 +1,16 @@
+defect_group,method,images,mean_dice,mean_iou,mean_mask_percentage
+Large (>=10%),raw,25,0.6305,0.4712,23.5944
+Large (>=10%),smooth_3x3,25,0.5826,0.427,23.5944
+Large (>=10%),smooth_5x5,25,0.5075,0.3576,23.5944
+Medium (2-10%),raw,332,0.3133,0.1886,3.285
+Medium (2-10%),smooth_3x3,332,0.2298,0.1318,3.285
+Medium (2-10%),smooth_5x5,332,0.168,0.093,3.285
+Reference,raw,34,0.0,0.0,0.0
+Reference,smooth_3x3,34,0.0,0.0,0.0
+Reference,smooth_5x5,34,0.0,0.0,0.0
+Small (0.5-2%),raw,444,0.1828,0.1013,1.3567
+Small (0.5-2%),smooth_3x3,444,0.1211,0.0648,1.3567
+Small (0.5-2%),smooth_5x5,444,0.0824,0.0432,1.3567
+Tiny (<0.5%),raw,72,0.0511,0.0263,0.2161
+Tiny (<0.5%),smooth_3x3,72,0.0283,0.0144,0.2161
+Tiny (<0.5%),smooth_5x5,72,0.0167,0.0084,0.2161

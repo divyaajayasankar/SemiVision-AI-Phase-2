@@ -1,0 +1,33 @@
+{
+  "status": "EXPERIMENTAL_NOT_DEPLOYED",
+  "method": "raw_reconstruction_error",
+  "threshold_source": "normal_calibration_images",
+  "parameter_selection_split": "validation",
+  "final_test_evaluated": false,
+  "calibration_reference_count": 34,
+  "baseline_quantile": 0.995,
+  "baseline_threshold": 0.00023953019990585744,
+  "candidate_quantile": 0.999,
+  "candidate_threshold": 0.0003674481704365462,
+  "baseline_metrics": {
+    "mean_anomaly_dice": 0.2343960728698415,
+    "mean_anomaly_iou": 0.1389013436701162,
+    "mean_anomaly_recall": 0.8263924023846411,
+    "mean_reference_flagged_pixel_fraction": 0.0089582056781045
+  },
+  "candidate_metrics": {
+    "mean_anomaly_dice": 0.3051966212876755,
+    "mean_anomaly_iou": 0.1875970248808227,
+    "mean_anomaly_recall": 0.7869478354222323,
+    "mean_reference_flagged_pixel_fraction": 0.0029736008986928
+  },
+  "baseline_tiny_dice": 0.0510791321084289,
+  "candidate_tiny_dice": 0.0916677593010318,
+  "checkpoint_sha256": "5784b2e68a68fdd179a7c4f8de45022afe9ee866e8421a17234671c61aab397f",
+  "limitations": [
+    "Selected using development validation data",
+    "Candidate has reduced pixel-level recall",
+    "Not independently confirmed",
+    "Existing RCC policy remains unchanged"
+  ]
+}

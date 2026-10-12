@@ -1,0 +1,28 @@
+{
+  "test_split_accessed": false,
+  "split_used": "policy_validation",
+  "development_count": 896,
+  "calibration_count": 34,
+  "conditions": [
+    "clean",
+    "brightness_+0.10",
+    "brightness_-0.10",
+    "contrast_0.70",
+    "gamma_1.50",
+    "noise_0.02",
+    "noise_0.05",
+    "blur_1.0",
+    "blur_2.0"
+  ],
+  "alpha": 0.05,
+  "lambda": 0.0,
+  "assumed_review_cost": 0.25,
+  "false_negative_cost": 10.0,
+  "false_positive_cost": 1.0,
+  "limitations": [
+    "Exploratory policy-validation experiment",
+    "Known synthetic drift is used",
+    "Perfect human-review resolution is assumed",
+    "No independent test performance is claimed"
+  ]
+}
